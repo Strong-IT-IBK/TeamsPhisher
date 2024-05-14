@@ -381,9 +381,15 @@ def enumUser(bearer, email, skypeToken=None):
     if content.status_code == 401:
         p_err("Unable to enumerate user. Is the access token valid?", True)
 
-    if content.status_code != 200 or ( content.status_code == 200 and len(content.text) < 3 ):
+    def returnUserNotFound():
         p_warn("Unable to enumerate user. User does not exist, is not Teams-enrolled, is part of senders tenant, or is configured to not appear in search results.")
         return None
+    
+    if content.status_code != 200 or ( content.status_code == 200 and len(content.text) < 3 ):
+        return returnUserNotFound()
+
+    if not json.loads(content.text)[email]["userProfiles"]:
+        return returnUserNotFound()
 
     if skypeToken is not None:
         user_profile = json.loads(content.text)[email]["userProfiles"][0]
